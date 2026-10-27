@@ -1,8 +1,30 @@
 import { useState } from 'react'
 
+const SELECTED =
+  'cursor-pointer rounded-[3px] border border-[#b83f45]/20 px-[7px] py-[3px]'
+const NOT_SELECTED =
+  'cursor-pointer rounded-[3px] border border-transparent px-[7px] py-[3px] hover:border-[#b83f45]/10'
+
+const FILTERS = [
+  { key: 'all', label: 'All' },
+  { key: 'active', label: 'Active' },
+  { key: 'completed', label: 'Completed' },
+]
+
 function Todos() {
   const [text, setText] = useState('')
   const [todos, setTodos] = useState([])
+  const [filter, setFilter] = useState('all')
+
+  const activeCount = todos.filter((todo) => !todo.completed).length
+  const completedCount = todos.length - activeCount
+  const allCompleted = todos.length > 0 && activeCount === 0
+
+  const visibleTodos = todos.filter((todo) => {
+    if (filter === 'active') return !todo.completed
+    if (filter === 'completed') return todo.completed
+    return true
+  })
 
   function handleSubmit(e) {
     e.preventDefault()
@@ -23,10 +45,18 @@ function Todos() {
     )
   }
 
-   function handleDelete(id) {
+  function handleDelete(id) {
     setTodos(todos.filter((todo) => todo.id !== id))
   }
-     const activeCount = todos.filter((todo) => !todo.completed).length
+
+  function handleClearCompleted() {
+    setTodos(todos.filter((todo) => !todo.completed))
+  }
+
+  function handleToggleAll() {
+    const nextCompleted = !allCompleted
+    setTodos(todos.map((todo) => ({ ...todo, completed: nextCompleted })))
+  }
 
   return (
     <section className="mx-auto max-w-[550px]">
@@ -47,7 +77,13 @@ function Todos() {
         {todos.length > 0 && (
           <>
             <main className="relative border-t border-[#e6e6e6]">
-              <input id="toggle-all" type="checkbox" className="peer sr-only" />
+              <input
+                id="toggle-all"
+                type="checkbox"
+                checked={allCompleted}
+                onChange={handleToggleAll}
+                className="peer sr-only"
+              />
               <label
                 htmlFor="toggle-all"
                 className="absolute -top-[66px] left-0 flex h-[65px] w-[60px] cursor-pointer items-center justify-center text-[22px] text-[#949494] peer-checked:text-[#484848]"
@@ -56,7 +92,7 @@ function Todos() {
               </label>
 
               <ul>
-                {todos.map((todo) => (
+                {visibleTodos.map((todo) => (
                   <li
                     key={todo.id}
                     className="group relative flex items-center border-b border-[#ededed] text-2xl"
@@ -89,39 +125,32 @@ function Todos() {
             </main>
 
             <footer className="grid h-10 grid-cols-3 items-center border-t border-[#e6e6e6] px-[15px] text-[15px]">
-                <span>
-                    <strong className="font-light">{activeCount}</strong>{' '}
-                    {activeCount === 1 ? 'item' : 'items'} left
-                </span>
+              <span>
+                <strong className="font-light">{activeCount}</strong>{' '}
+                {activeCount === 1 ? 'item' : 'items'} left
+              </span>
               <ul className="flex justify-center gap-1">
-                <li>
-                  <button
-                    type="button"
-                    className="cursor-pointer rounded-[3px] border border-[#b83f45]/20 px-[7px] py-[3px]"
-                  >
-                    All
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    className="cursor-pointer rounded-[3px] border border-transparent px-[7px] py-[3px] hover:border-[#b83f45]/10"
-                  >
-                    Active
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    className="cursor-pointer rounded-[3px] border border-transparent px-[7px] py-[3px] hover:border-[#b83f45]/10"
-                  >
-                    Completed
-                  </button>
-                </li>
+                {FILTERS.map(({ key, label }) => (
+                  <li key={key}>
+                    <button
+                      type="button"
+                      onClick={() => setFilter(key)}
+                      className={filter === key ? SELECTED : NOT_SELECTED}
+                    >
+                      {label}
+                    </button>
+                  </li>
+                ))}
               </ul>
-              <button type="button" className="cursor-pointer justify-self-end hover:underline">
-                Clear completed
-              </button>
+              {completedCount > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearCompleted}
+                  className="cursor-pointer justify-self-end hover:underline"
+                >
+                  Clear completed
+                </button>
+              )}
             </footer>
           </>
         )}
